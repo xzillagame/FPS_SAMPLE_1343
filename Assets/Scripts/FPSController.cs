@@ -4,22 +4,30 @@ using UnityEngine;
 
 public class FPSController : MonoBehaviour
 {
+    // references
     CharacterController controller;
     [SerializeField] GameObject cam;
+    [SerializeField] Transform gunHold;
+    [SerializeField] Gun initialGun;
+
+    // stats
     [SerializeField] float movementSpeed = 2.0f;
     [SerializeField] float lookSensitivityX = 1.0f;
     [SerializeField] float lookSensitivityY = 1.0f;
-
-    Vector3 velocity;
     [SerializeField] float gravity = -9.81f;
     [SerializeField] float jumpForce = 10;
+    
+    // private variables
+    Vector3 velocity;
     bool grounded;
     float xRotation;
-
-    public GameObject Cam { get { return cam; } }
-
     List<Gun> equippedGuns = new List<Gun>();
-    public Gun currentGun = null;
+    int gunIndex = 0;
+    Gun currentGun = null;
+
+    // properties
+    public GameObject Cam { get { return cam; } }
+    
 
     private void Awake()
     {
@@ -31,6 +39,9 @@ public class FPSController : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
+
+        // start with a gun
+        AddGun(initialGun);
     }
 
     // Update is called once per frame
@@ -41,6 +52,8 @@ public class FPSController : MonoBehaviour
 
         FireGun();
 
+        // always go back to "no velocity"
+        // "velocity" is for movement speed that we gain in addition to our movement (falling, knockback, etc.)
         Vector3 noVelocity = new Vector3(0, velocity.y, 0);
         velocity = Vector3.Lerp(velocity, noVelocity, 5 * Time.deltaTime);
     }
@@ -86,9 +99,41 @@ public class FPSController : MonoBehaviour
     {
         if(GetPressFire())
         {
-            currentGun?.Fire();
+            currentGun?.AttemptFire();
         }
     }
+
+    void EquipGun(Gun g)
+    {
+        // disable current gun, if there is one
+        currentGun?.gameObject.SetActive(false);
+
+        g.gameObject.SetActive(true);
+        g.transform.parent = gunHold;
+        g.transform.localPosition = Vector3.zero;
+        currentGun = g;
+    }
+
+    // public methods
+
+    public void AddGun(Gun g)
+    {
+        // add new gun to the list
+        equippedGuns.Add(g);
+
+        // our index is the last one/new one
+        gunIndex = equippedGuns.Count - 1;
+
+        // put gun in the right place
+        EquipGun(g);
+    }
+
+    public void IncreaseAmmo(int amount)
+    {
+        currentGun.AddAmmo(amount);
+    }
+
+    // Input methods
 
     bool GetPressFire()
     {
@@ -115,19 +160,16 @@ public class FPSController : MonoBehaviour
         return Input.GetButton("Sprint");
     }
 
+    // Collision methods
 
+    // Character Controller can't use OnCollisionEnter :D thanks Unity
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        Debug.Log("HIT SOME");
         if (hit.gameObject.GetComponent<Damager>())
         {
-            Debug.Log("HOT");
             var collisionPoint = hit.collider.ClosestPoint(transform.position);
             var knockbackAngle = (transform.position - collisionPoint).normalized;
             velocity = (20 * knockbackAngle);
-            //controller.Move(5 * knockbackAngle * Time.deltaTime);
         }
     }
-
-
 }
