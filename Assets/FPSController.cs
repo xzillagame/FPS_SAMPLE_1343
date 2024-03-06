@@ -5,7 +5,7 @@ using UnityEngine;
 public class FPSController : MonoBehaviour
 {
     CharacterController controller;
-    [SerializeField] Camera cam;
+    [SerializeField] GameObject cam;
     [SerializeField] float movementSpeed = 2.0f;
     [SerializeField] float lookSensitivityX = 1.0f;
     [SerializeField] float lookSensitivityY = 1.0f;
@@ -16,7 +16,7 @@ public class FPSController : MonoBehaviour
     bool grounded;
     float xRotation;
 
-    public Camera Cam { get { return cam; } }
+    public GameObject Cam { get { return cam; } }
 
     List<Gun> equippedGuns = new List<Gun>();
     public Gun currentGun = null;
@@ -40,6 +40,9 @@ public class FPSController : MonoBehaviour
         Look();
 
         FireGun();
+
+        Vector3 noVelocity = new Vector3(0, velocity.y, 0);
+        velocity = Vector3.Lerp(velocity, noVelocity, 5 * Time.deltaTime);
     }
 
     void Movement()
@@ -48,12 +51,12 @@ public class FPSController : MonoBehaviour
 
         if(grounded && velocity.y < 0)
         {
-            velocity.y = -2;
+            velocity.y = -0.5f;
         }
 
         Vector2 movement = GetPlayerMovementVector();
         Vector3 move = transform.right * movement.x + transform.forward * movement.y;
-        controller.Move(move * movementSpeed * (GetSprint() ? 3 : 1) * Time.deltaTime);
+        controller.Move(move * movementSpeed * (GetSprint() ? 2 : 1) * Time.deltaTime);
 
         if (Input.GetButtonDown("Jump") && grounded)
         {
@@ -112,5 +115,19 @@ public class FPSController : MonoBehaviour
         return Input.GetButton("Sprint");
     }
 
-    
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        Debug.Log("HIT SOME");
+        if (hit.gameObject.GetComponent<Damager>())
+        {
+            Debug.Log("HOT");
+            var collisionPoint = hit.collider.ClosestPoint(transform.position);
+            var knockbackAngle = (transform.position - collisionPoint).normalized;
+            velocity = (20 * knockbackAngle);
+            //controller.Move(5 * knockbackAngle * Time.deltaTime);
+        }
+    }
+
+
 }
