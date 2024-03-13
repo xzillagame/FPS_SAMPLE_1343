@@ -16,5 +16,35 @@ public class PlayerHUD : MonoBehaviour
     void Start()
     {
         player = FindObjectOfType<FPSController>();
+        player.onDamaged.AddListener(DisplayUpdatedHealth);
+        //player.onDamaged += DisplayUpdatedHealth;
     }
+
+    #region Health Update
+    public void DisplayUpdatedHealth()
+    {
+        healthBar.fillAmount = healthBar.fillAmount > 0f? healthBar.fillAmount - .1f : 0f;
+    }
+
+    #endregion
+
+    #region Ammo Update
+    public void DisplayCurrentAmmo(int curAmmo)
+    {
+        currentAmmoText.text = curAmmo.ToString();
+    }
+
+    public void DisplayMaxAmmo(int maxAmmo)
+    {
+        maxAmmoText.text = maxAmmo.ToString();
+    }
+    #endregion
+
+
+    private void OnDisable()
+    {
+        player.onDamaged.RemoveListener(DisplayUpdatedHealth);
+    }
+
+
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class FPSController : MonoBehaviour
 {
@@ -24,6 +25,11 @@ public class FPSController : MonoBehaviour
     List<Gun> equippedGuns = new List<Gun>();
     int gunIndex = 0;
     Gun currentGun = null;
+
+
+    //Events (Added by X.E)
+    public UnityAction onInteracted;
+    public UnityEvent onDamaged;
 
     // properties
     public GameObject Cam { get { return cam; } }
@@ -51,6 +57,14 @@ public class FPSController : MonoBehaviour
         Look();
 
         FireGun();
+
+        //Interact check by X.E
+        if (Input.GetButtonDown("Interact"))
+        {
+            onInteracted?.Invoke();
+            Debug.Log("Interact");
+        }
+
 
         // always go back to "no velocity"
         // "velocity" is for movement speed that we gain in addition to our movement (falling, knockback, etc.)
@@ -170,6 +184,7 @@ public class FPSController : MonoBehaviour
             var collisionPoint = hit.collider.ClosestPoint(transform.position);
             var knockbackAngle = (transform.position - collisionPoint).normalized;
             velocity = (20 * knockbackAngle);
+            onDamaged?.Invoke();
         }
     }
 }
